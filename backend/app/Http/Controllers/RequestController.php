@@ -14,7 +14,7 @@ class RequestController extends Controller
      return response()->json(['data'=>$services]);
     }
      
-
+     
      public function store(Request $request)
 {
     $validated = $request->validate([
@@ -36,4 +36,13 @@ class RequestController extends Controller
     public function destroy(){
 
     }
+
+    public function getStatus(string $id)
+    {
+    $request = CitizenRequest::findOrFail($id);
+
+    return response()->json([
+        'status' => $request->status, // pending | approved | declined
+    ]);
+}
 }

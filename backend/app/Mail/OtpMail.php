@@ -3,58 +3,30 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Content;
-use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
 class OtpMail extends Mailable
 {
-    use Queueable, SerializesModels; 
-    
-    
-    public $otpCode;
-    public $citizenName;
+    use Queueable, SerializesModels;
 
-    /**
-     * Create a new message instance.
-     */
-    public function __construct($otpCode, $citizenRequestData)
+    public string $otpCode;
+    public string $citizenName;
+
+    public function __construct(string $otpCode, string $citizenName)
     {
-        //
-       $this->otpCode = $otpCode;
-        // Extract the name from the data array passed in
-        $this->citizenName = $citizenRequestData['name'] ?? 'Citizen'; 
+        $this->otpCode = $otpCode;
+        $this->citizenName = $citizenName;
     }
 
-    /**
-     * Get the message envelope.
-     */
-    public function envelope(): Envelope
+    public function build()
     {
-        return new Envelope(
-            subject: 'Otp Mail',
-        );
-    }
-
-    /**
-     * Get the message content definition.
-     */
-    public function content(): Content
-    {
-        return new Content(
-            view: 'view.name',
-        );
-    }
-
-    /**
-     * Get the attachments for the message.
-     *
-     * @return array<int, \Illuminate\Mail\Mailables\Attachment>
-     */
-    public function attachments(): array
-    {
-        return [];
+        // Use HTML directly, no Blade
+        return $this->subject('Your OTP Code')
+                    ->html("
+                        <p>Hello {$this->citizenName},</p>
+                        <p>Your OTP code is: <strong>{$this->otpCode}</strong></p>
+                        <p>This code expires in 10 minutes.</p>
+                    ");
     }
 }

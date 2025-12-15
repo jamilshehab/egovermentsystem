@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Mail;
 
 class ApproveServiceController extends Controller
 {
+    /**
+     * Get all pending requests
+     */
     public function index()
     {
         $pending = CitizenRequest::where('status', 'pending')->get();
@@ -24,13 +27,12 @@ class ApproveServiceController extends Controller
     }
 
     /**
-     * Approve request + send OTP
+     * Approve request and send OTP
      */
     public function update(Request $request, $id)
     {
         $citizenRequest = CitizenRequest::findOrFail($id);
 
-        // Prevent double approval
         if ($citizenRequest->status === 'approved') {
             return response()->json([
                 'message' => 'Request already approved'
@@ -57,11 +59,20 @@ class ApproveServiceController extends Controller
             'sent_via' => 'azure_graph',
         ]);
 
-        // Send OTP email (prototype mailer)
-        Mail::to($citizenRequest->email)
-            ->send(new OtpMail($otpPlain, [
-                'name' => $citizenRequest->name
-            ]));
+        // Send OTP email to citizen
+        try {
+            Mail::to($citizenRequest->email)
+                ->send(new OtpMail($otpPlain, $citizenRequest->name));
+        } catch (\Throwable $e) {
+            \Log::error('OTP mail failed', [
+                'error' => $e->getMessage(),
+                'citizen_email' => $citizenRequest->email,
+            ]);
+
+            return response()->json([
+                'message' => 'Request approved, but OTP email failed'
+            ], 500);
+        }
 
         return response()->json([
             'message' => 'Service approved and OTP sent'
@@ -121,7 +132,6 @@ class ApproveServiceController extends Controller
             'password' => 'required|min:8|confirmed',
         ]);
 
-        // Ensure OTP was verified
         $otp = Otp::where('citizen_request_id', $request->citizen_request_id)
             ->where('is_used', true)
             ->latest()
@@ -137,7 +147,7 @@ class ApproveServiceController extends Controller
 
         // Create user account
         $user = User::create([
-            'username' => $request->username,
+            'name' => $request->name,
             'email' => $citizenRequest->email,
             'password' => Hash::make($request->password),
         ]);

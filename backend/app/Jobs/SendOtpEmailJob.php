@@ -35,7 +35,8 @@ class SendOtpEmailJob implements ShouldQueue
     public function handle(): void
     {
         //
-        \Mail::to($this->email)->send(new OtpMail($this->otpPlain, $this->citizenRequest));
+       \Mail::to($this->citizenRequest->email)
+         ->send(new OtpMail($this->otpPlain, $this->citizenRequest));
 
     }
 }

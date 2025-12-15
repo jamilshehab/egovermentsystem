@@ -11,20 +11,19 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:api')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/profile', [AuthController::class, 'profile']);
-    Route::apiResource('approveServices', ApproveServiceController::class)->except('store', 'edit', 'create');
-
+ 
 });
 
-Route::get('/services', [RequestController::class, 'index']);
-Route::post('/citizen-requests', [RequestController::class, 'store']);
  
+Route::apiResource('services',RequestController::class)->except('edit','update','create','destroy');
+Route::post('/account/activate', [ApproveServiceController::class, 'activateAccount']);  
+Route::post('/servicesstatus/{id}',[RequestController::class,'getStatus']);
+
 Route::middleware(['auth:api', 'checkRole:supervisor'])->group(function () {
    
 Route::apiResource('approveServices', ApproveServiceController::class)->except('store', 'edit', 'create');
   // OTP verification (for citizen)
-Route::post('/otp/verify', [ApproveServiceController::class, 'verifyOtp']);
+});
+ Route::post('/otp/verify', [ApproveServiceController::class, 'verifyOtp']);
 
 // Activate account (for citizen)
-Route::post('/account/activate', [ApproveServiceController::class, 'activateAccount']);  
-});
- 
